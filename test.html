@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html>
+
+<head>    
+	<title>Máster en Geoinformática</title>
+	<meta charset="utf-8"/>
+	<link rel="stylesheet" type="text/css" href="styles.css" />
+	<script src="libs/react.js"></script>
+	<script src="libs/react-dom.js"></script>
+</head>
+    
+<body>    
+
+<!-- CABECERA y BARRA DE MENÚS -->
+<div id="wrapper-header">
+	<div id="header">
+	</div>     
+</div> 
+
+<div id="wrapper-menu">
+	<div id="menu">
+		<ul>
+			<li><a title="Inicio" href="index.html">Inicio</a></li>
+			<li><a id="seleccionado" title="Test" href="test.html">Test</a></li>
+			<li><a title="Práctica 1" href="practica1.html">Práctica 1</a></li>
+			<li><a title="Práctica 2" href="practica2.html">Práctica 2</a></li>
+		</ul>
+	</div>
+</div>
+
+<!-- CONTENIDO -->
+<div id="content">
+	<a title="Inicio" href="index.html"><img class="icon" src="images/icon_back.png" alt="(back)"/></a>
+	<a class="back" title="Inicio" href="index.html">Inicio</a>
+
+	<h2>Test de conocimientos</h2>
+	
+	<div id="test-form"></div>
+</div>
+
+<script text="text/javascript">
+	// Validators must return error string, or empty string (null if you want) in other case
+
+	function requiredValidator(x) {
+		if (x)
+			return null;
+		else
+			return "Campo obligatorio!";
+	}
+
+	function emailValidator(x) {
+	    if (!x || /\S+@\S+\.\S+/.test(x))
+	    	return null;
+	    else
+	    	return "Correo no válido!";
+	}
+
+	function requiredEmailValidator(x) {
+		return requiredValidator(x) || emailValidator(x);
+	}
+
+	function dateValidator(x) {
+		if (!x || /\d{1,2}\/\d{1,2}\/\d{4}/.test(x))
+			return null;
+		else
+			return "Fecha no válida!";
+	}
+
+	var re_nif = new RegExp("[\\s-]", "g");
+	
+	function nifValidator(x) {
+		if (!x)
+			return null;
+
+		var lookup = 'TRWAGMYFPDXBNJZSQVHLCKE';
+		x = x.replace(re_nif, "");
+
+		if (!/\d{8}[A-Za-z]/.test(x))
+			return "NIF no válido!";
+
+		var value = x.substr(0, x.length-1);
+		var confirmation = x.substr(x.length-1, 1).toUpperCase();
+
+		if(lookup.charAt(value % 23) != confirmation)
+			return "NIF no válido!";
+
+		return null;
+	}
+	
+	function genericTestValidator(isValid) {
+		if (isValid)
+			return null;
+		else
+			return "Respuesta incorrecta!";
+	}
+
+	function getEqualsTestValidator (v) {
+		return function (x) {return genericTestValidator(x == v)};
+	}
+
+	function getArrayEqualsTestValidator (v) {
+		return function (x) {
+			return genericTestValidator(x.every(function (b, i) {
+				return b == v[i];
+			}));
+		};
+	}
+
+	function passwordTestValidator(x) {
+		if (requiredValidator(x)) {
+			return null;
+		} else {
+			return "Esa no es, la acabo de probar!";
+		}
+	}
+	
+	var re_troll = new RegExp("[aA]", "g");
+	
+	function trollTestChange(e) {
+		e.target.value = e.target.value.replace(re_troll, "");
+	}
+	
+	function trollTestValidator(x) {
+		if (re_troll.test(x)) {
+			return "De alguna forma, has conseguido meter una A!";
+		} else if (x.split(" ").length > 200) {
+			return "Demasiadas palabras!";
+		} else {
+			return null;
+		}
+	}
+
+	var formField = React.createClass({
+		propTypes: {
+			text: React.PropTypes.string.isRequired,
+			htmlFor: React.PropTypes.string,
+			autoValidation: React.PropTypes.bool
+		},
+		
+		getDefaultProps: function() {
+			return {autoValidation: false};
+		},
+
+		getInitialState: function() {
+			return {className: ""};
+		},
+
+		validate: function(manual) {
+			if (!this.props.autoValidation && !manual)
+				return true;
+			
+			var error = null;
+
+			React.Children.forEach(this.props.children, function(c) {
+				if (c.props && c.props.listeners)
+					error = error || c.props.listeners.validate();
+			});
+
+			if (error) {
+				this.setState({className: "errorField"});
+			} else {
+				this.setState({className: ""});
+			}
+
+			this.refs.errorLabel.textContent = error;
+			return !error;
+		},
+		
+		reset: function() {
+			React.Children.forEach(this.props.children, function(c) {
+				if (c.props && c.props.listeners)
+					c.props.listeners.reset();
+			});
+		},
+
+		componentWillMount: function() {
+			var v = this.validate;
+			
+			this.props.listeners.validate = v;
+			this.props.listeners.reset = this.reset;
+			
+			React.Children.forEach(this.props.children, function(c) {
+				if (c.props && c.props.listeners)
+					c.props.listeners.parentValidate = v;
+			});
+		},
+
+		render: function() {
+			var htmlFor = this.props.htmlFor;
+
+			if (!htmlFor && React.Children.count(this.props.children) == 1)
+				htmlFor = React.Children.only(this.props.children).props.id;
+
+			return React.createElement("div", {className: "field " + this.state.className}, 
+				React.createElement("label", {htmlFor: htmlFor}, this.props.text),
+				React.createElement("label", {htmlFor: htmlFor, className: "errorLabel", ref: "errorLabel"}),
+				this.props.children);
+		}
+	});
+
+	var textInput = React.createClass({
+		propTypes: {
+			name: React.PropTypes.string,
+			id: React.PropTypes.string,
+			type: React.PropTypes.string,
+			size: React.PropTypes.number,
+			validator: React.PropTypes.func
+		},
+
+		getInitialState: function() {
+			return {value: ""};
+		},
+
+		validate: function() {
+			if (this.props.validator) {
+				return this.props.validator(this.state.value);
+			} else {
+				return null;
+			}
+		},
+		
+		reset: function() {
+			this.setSetate({value: ""});
+		},
+
+		componentWillMount: function() {
+			this.props.listeners.validate = this.validate;
+			this.props.listeners.reset = this.reset;
+		},
+
+		onChange: function(e) {
+			this.setState({value: e.target.value});
+		},
+		
+		render: function() {
+			var id = this.props.id;
+			if (!id)
+				id = this.props.name;
+
+			var v = this.props.listeners.parentValidate;
+			var callParentValidate = function() {if (v) v()};
+
+			return React.createElement("input", {name: this.props.name, id: id, type: this.props.type, size: this.props.size, className: this.state.className, 
+					 value: this.state.value, onFocusOut: callParentValidate, onBlur: callParentValidate, onChange: this.onChange});
+		}
+	});
+	
+	var textAreaInput = React.createClass({
+		propTypes: {
+			name: React.PropTypes.string,
+			id: React.PropTypes.string,
+			rows: React.PropTypes.number,
+			cols: React.PropTypes.number,
+			validator: React.PropTypes.func
+		},
+
+		getInitialState: function() {
+			return {value: ""};
+		},
+
+		validate: function() {
+			if (this.props.validator) {
+				return this.props.validator(this.state.value);
+			} else {
+				return null;
+			}
+		},
+		
+		reset: function() {
+			this.setSetate({value: ""});
+		},
+
+		componentWillMount: function() {
+			this.props.listeners.validate = this.validate;
+			this.props.listeners.reset = this.reset;
+		},
+
+		onChange: function(e) {
+			if (this.props.listeners.onChange) {
+				this.props.listeners.onChange(e);
+			}
+		
+			this.setState({value: e.target.value});
+		},
+
+		render: function() {
+			var id = this.props.id;
+			if (!id)
+				id = this.props.name;
+
+			var v = this.props.listeners.parentValidate;
+			var callParentValidate = function() {if (v) v()};
+
+			return React.createElement("textarea", {name: this.props.name, id: id, rows : this.props.rows, cols: this.props.cols, className: this.state.className, 
+				value: this.state.value, onFocusOut: callParentValidate, onBlur: callParentValidate, onChange: this.onChange});
+		}
+	});
+
+	var checkboxInput = React.createClass({
+		propTypes: {
+			name: React.PropTypes.string.isRequired,
+			text: React.PropTypes.string,
+			type: React.PropTypes.oneOf(["checkbox", "radio"]),	// yeah, radio is just a kind of a checkbox now!
+			validator: React.PropTypes.func
+		},
+
+		/* uncontrolled component */
+
+		getDefaultProps: function() {
+			return {type: "checkbox"};
+		},
+
+		onClick: function(e) {
+			if (this.props.listeners.parentValidate) {
+				this.props.listeners.parentValidate();
+			}
+		},
+
+		validate: function() {
+			if (this.props.validator) {
+				return this.props.validator(this.refs.input.checked);
+			} else {
+				return null;
+			}
+		},
+		
+		reset: function() {
+			this.refs.input.checked = false;
+		},
+
+		componentWillMount: function() {
+			this.props.listeners.validate = this.validate;
+			this.props.listeners.reset = this.reset;
+		},
+
+		render: function() {
+			return React.createElement("label", {}, 
+				React.createElement("input", {type: this.props.type, value: this.props.text, name: this.props.name, ref: "input", onClick: this.onClick}, this.props.text));
+		}
+	});
+
+	var selectInput = React.createClass({
+		propTypes: {
+			name: React.PropTypes.string.isRequired,
+			options: React.PropTypes.arrayOf(React.PropTypes.string),
+			multiple: React.PropTypes.bool,
+			size: React.PropTypes.number,
+			validator: React.PropTypes.func
+		},
+
+		getDefaultProps: function() {
+			return {options: [""], multiple: false};
+		},
+
+		getInitialState: function() {
+			return {value: this.props.options[0]};
+		},
+
+		validate: function() {
+			var r = this.refs;
+			
+			if (this.props.validator) {
+				if (this.props.multiple)
+					return this.props.validator(Object.keys(this.refs).map(function(k) {
+						return r[k].selected;
+					}));
+				else
+					return this.props.validator(this.state.value);
+			} else {
+				return null;
+			}
+		},
+		
+		reset: function() {
+			this.setSetate({value: ""});
+			var r = this.refs;
+			
+			Object.keys(this.refs).forEach(function(k) {
+				r[k].selected = false;
+			});
+		},
+
+		componentWillMount: function() {
+			this.props.listeners.validate = this.validate;
+			this.props.listeners.reset = this.reset;
+		},
+
+		onChange: function(e) {
+			var v = this.props.listeners.parentValidate;
+
+			this.setState({value: e.target.value}, function() {
+				if (v) v();
+			});
+		},
+
+		componentWillMount: function() {
+			this.props.listeners.validate = this.validate;
+		},
+
+		render: function() {
+			var name = this.props.name + "_";
+
+			return React.createElement("select", {name: this.props.name, onChange: this.onChange, multiple: this.props.multiple, size: this.props.size}, 
+					this.props.options.map(function(x, i) {
+						return React.createElement("option", {key: name + i, ref: name + i, value: x}, x);
+					}));
+		}
+	});
+
+	var formSection = React.createClass({
+		propTypes: {
+			name: React.PropTypes.string.isRequired,
+			start: React.PropTypes.number,
+			mustBeValid: React.PropTypes.bool
+		},
+
+		getDefaultProps: function() {
+			return {name: "", start: 0, mustBeValid: false};
+		},
+
+		validate: function() {
+			var valid = !this.props.mustBeValid || React.Children.count(this.props.children) == this.calculateScore();
+		
+			return valid;
+		},
+		
+		reset: function() {
+			React.Children.forEach(this.props.children, function(c) {
+				if (c.props && c.props.listeners)
+					c.props.listeners.reset();
+			});
+		},
+		
+		calculateScore: function() {
+			var score = React.Children
+				.map(this.props.children, function(c) {return c.props.listeners.validate(true)})
+				.filter(function(x) {return x}).length;
+				
+			return score;
+		},
+		
+		componentWillMount: function() {
+			this.props.listeners.validate = this.validate;
+			this.props.listeners.calculateScore = this.calculateScore;
+			this.props.listeners.reset = this.reset;
+		},
+
+		render: function() {
+			if (this.props.start) {
+				return React.createElement("fieldset", {}, React.createElement("legend", {}, this.props.name), React.createElement("ol", {start: this.props.start}, this.props.children));
+			} else {
+				return React.createElement("fieldset", {}, React.createElement("legend", {}, this.props.name), this.props.children);
+			}
+		}
+	});
+
+	var testQuestion = React.createClass({
+		validate: function(manual) {
+			var valid = React.Children
+				.map(this.props.children, function(c) {return c.props.listeners.validate(manual)})
+				.every(function(x) {return x});
+		
+			return valid;
+		},
+		
+		reset: function() {
+			React.Children.forEach(this.props.children, function(c) {
+				if (c.props && c.props.listeners)
+					c.props.listeners.reset();
+			});
+		},
+		
+		componentWillMount: function() {
+			this.props.listeners.validate = this.validate;
+			this.props.listeners.reset = this.reset;
+		},
+	
+		render: function() {
+			return React.createElement("li", {}, this.props.children);
+		}
+	});
+	
+	var submitButton = React.createClass ({
+		propTypes: {
+			name: React.PropTypes.string,
+			text: React.PropTypes.string,
+			img: React.PropTypes.string
+		},
+	
+		render: function() {
+			var elements = [];
+		
+			if (this.props.img) {
+				elements.push(React.createElement("img", {htmlClass: "icon", src: this.props.img, alt: "(submit)", key: this.props.name + "_img"}));
+			}
+			
+			elements.push(React.createElement("input", {type: "submit", className: "boton_submit", name: this.props.name, value: this.props.text, key: this.props.name + "_submit"}));
+			
+			return React.createElement("div", {}, elements);
+		}
+	});
+	
+	var formComponent = React.createClass({
+		propTypes: {
+			action: React.PropTypes.string,
+			method: React.PropTypes.string,
+			id: React.PropTypes.string,
+			submitName: React.PropTypes.string,
+			submitText: React.PropTypes.string,
+			submitImg: React.PropTypes.string
+		},
+	
+		getDefaultProps: function() {
+			return {
+				action: window.location.href,
+				mehtod: "post",
+				submitName: "enviar"
+			};
+		},
+		
+		validate: function() {
+			var valid = React.Children
+				.map(this.props.children, function(c) {return c.props.listeners.validate()})
+				.every(function(x) {return x});
+		
+			return valid;
+		},
+		
+		reset: function() {
+			React.Children.forEach(this.props.children, function(c) {
+				if (c.props && c.props.listeners)
+					c.props.listeners.reset();
+			});
+		},
+		
+		calculateScore: function() {
+			var score = React.Children.map(this.props.children, function(c) {
+				return c.props.mustBeValid ? 0 : c.props.listeners.calculateScore();
+			}).reduce(function(prev, i) {
+				return prev + i;
+			});
+			
+			return score;
+		},
+		
+		onSubmit: function(e) {
+			e.preventDefault();
+		
+			if (this.validate()) {
+				var score = this.calculateScore();
+				
+				if (score >= 5)
+					alert("Aprobado! (" + score + ")");
+				else 
+					alert("Suspenso! (" + score + ")");
+			} else {
+				alert("Hay errores en el cuestionario. Revisar.");
+			}
+			
+			return false;
+		},
+	
+		render: function() {
+			return React.createElement("form", {action: this.props.url, method: this.props.method, id: this.props.id, 
+				onSubmit: this.onSubmit}, 
+				this.props.children,
+				React.createElement(submitButton, {name: this.props.submitName, text: this.props.submitText, img: this.props.submitImg}),
+				React.createElement("input", {type: "reset", id: "reset", name: "limpiar", value: "Borrar"})
+			);
+		}
+	});
+
+	/* Can't use JSX here, so it's pure React :( */
+
+	ReactDOM.render(React.createElement(formComponent, {
+		id: "test",
+		url: "http://udc.es/url_inventada",
+		submitText: "Evaluar cuestionario",
+		submitImg: "images/icon_submit.png"
+	},
+		React.createElement(formSection, {name: "Datos personales", mustBeValid: true, listeners: {}}, 
+			React.createElement(formField, {text: "Nombre", htmlFor: "nombre", autoValidation: true, listeners: {}}, 
+				React.createElement(textInput, {name: "nombre", validator: requiredValidator, listeners: {}})),
+			React.createElement(formField, {text: "Apellidos", htmlFor: "apellidos", autoValidation: true, listeners: {}}, 
+				React.createElement(textInput, {name: "apellidos", validator: requiredValidator, listeners: {}})),
+			React.createElement(formField, {text: "Correo electrónico", htmlFor: "email", autoValidation: true, listeners: {}}, 
+				React.createElement(textInput, {name: "email", validator: requiredEmailValidator, type: "email", listeners: {}})),
+			React.createElement(formField, {text: "Fecha de nacimiento (dd/mm/aaaa)", htmlFor: "fecha_nacimiento", autoValidation: true, listeners: {}}, 
+				React.createElement(textInput, {name: "fecha_nacimiento", validator: dateValidator, type: "date", size: 8, listeners: {}})),
+			React.createElement(formField, {text: "DNI", htmlFor: "dni", autoValidation: true, listeners: {}}, 
+				React.createElement(textInput, {name: "dni", validator: nifValidator, size: 8, listeners: {}}))
+		),
+		React.createElement(formSection, {name: "HTML y CSS", start: 1, listeners: {}}, 
+			React.createElement(testQuestion, {listeners: {}}, 
+				React.createElement(formField, {text: "¿Qué elemento se usa para crear un campo de texto?", htmlFor: "pregunta1", listeners: {}}, 
+					React.createElement(textInput, {name: "pregunta1", validator: getEqualsTestValidator("input"), size: 11, listeners: {}}))),
+			React.createElement(testQuestion, {listeners: {}}, 
+				React.createElement(formField, {text: "Indica qué opciones, de las siguientes, componen un elemento según el modelo de cajas", listeners: {}}, 
+					React.createElement(checkboxInput, {name: "pregunta2", text: "Borde", validator: getEqualsTestValidator(true), listeners: {}}),
+					React.createElement(checkboxInput, {name: "pregunta2", text: "Margen", validator: getEqualsTestValidator(true), listeners: {}}),
+					React.createElement(checkboxInput, {name: "pregunta2", text: "Bolsa", validator: getEqualsTestValidator(false), listeners: {}}),
+					React.createElement(checkboxInput, {name: "pregunta2", text: "Relleno", validator: getEqualsTestValidator(true), listeners: {}})
+			))
+		),
+		React.createElement(formSection, {name: "JavaScript", start: 3, listeners: {}}, 
+			React.createElement(testQuestion, {listeners: {}}, 
+				React.createElement(formField, {text: "¿Qué relación tiene con Java?", listeners: {}}, 
+					React.createElement(checkboxInput, {type: "radio", name: "pregunta3", text: "Ninguna", validator: getEqualsTestValidator(true), listeners: {}}),
+					React.createElement(checkboxInput, {type: "radio", name: "pregunta3", text: "Total", validator: getEqualsTestValidator(false), listeners: {}}),
+					React.createElement(checkboxInput, {type: "radio", name: "pregunta3", text: "Todas las anteriores", validator: getEqualsTestValidator(false), listeners: {}})
+			)),
+			React.createElement(testQuestion, {listeners: {}}, 
+				React.createElement(formField, {text: "Completar la frase: ", listeners: {}}, 
+					React.createElement(selectInput, {name: "pregunta4_1", options: ["", "Pienso", "Inspiro", "Llueve", "SYN"], validator: getEqualsTestValidator("Pienso"), listeners: {}}),
+					", luego ",
+					React.createElement(selectInput, {name: "pregunta4_1", options: ["", "espiro", "la hierba está mojada", "existo", "ACK"], validator: getEqualsTestValidator("existo"), listeners: {}})
+			))
+		),
+		React.createElement(formSection, {name: "Relleno", start: 5, listeners: {}}, 
+			React.createElement(testQuestion, {listeners: {}}, 
+				React.createElement(formField, {text: "¿Sabes hacer algo más que formularios y listados?", listeners: {}}, 
+					React.createElement("label", {}, 
+						React.createElement("input", {type: "checkbox", disabled: true}, "Sí"))
+			)),
+			React.createElement(testQuestion, {listeners: {}}, 
+				React.createElement(formField, {text: "Confirma la contraseña de tu correo", htmlFor: "pregunta6", listeners: {}}, 
+					React.createElement(textInput, {name: "pregunta6", type: "password", validator: passwordTestValidator, listeners: {}})
+			)),
+			React.createElement(testQuestion, {listeners: {}}, 
+				React.createElement(formField, {text: "Para demostrar que no eres un robot, introduce las palabras que ves en la imagen", htmlFor: "pregunta7", listeners: {}}, 
+					React.createElement("div", {id: "rect_negro"}),
+					React.createElement(textInput, {name: "pregunta7", validator: getEqualsTestValidator("palabras secretas"), listeners: {}})
+			)),
+			React.createElement(testQuestion, {listeners: {}}, 
+				React.createElement(formField, {text: "Adivina cuál es mi color favorito", htmlFor: "pregunta8", listeners: {}}, 
+					React.createElement(textInput, {name: "pregunta8", type: "color", validator: getEqualsTestValidator("#8080ff"), listeners: {}})
+			)),
+			React.createElement(testQuestion, {listeners: {}}, 
+				React.createElement(formField, {text: "¿Cuáles de estas preposiciones tienen un significado paradójico?", listeners: {}}, 
+					React.createElement(selectInput, {name: "pregunta9", options: ["", "Pienso", "Inspiro", "Llueve", "SYN"], multiple: true, size: 5, validator: getArrayEqualsTestValidator([true, false, false, true, true]), listeners: {}})
+			)),
+			React.createElement(testQuestion, {listeners: {}}, 
+				React.createElement(formField, {text: "Elabora una redacción sobre por qué te mereces aprobar y tus compañeros no, sin utilizar palabras que contengan la letra \"a\" ni más de 200 palabras en total", htmlFor: "pregunta10", listeners: {}}, 
+					React.createElement(textAreaInput, {name: "pregunta10", cols: 60, rows: 3, validator: trollTestValidator, listeners: {onChange: trollTestChange}})
+			))
+		)), document.getElementById("test-form"));
+</script>
+</body>
+</html>

@@ -1,0 +1,247 @@
+body {
+	margin: 0 0 1em 0;
+	padding: 0;
+	color: black;
+	background-color: #eee;
+	line-height: 130%;
+	font-family: arial, helvetica, verdana, tahoma, sans-serif;
+	text-align: justify;
+}
+
+#wrapper-header {
+	background: white;
+	width: 100%
+}
+
+#header {
+	background: white url('images/LogoWebes_ES.png') left no-repeat; 
+	width: 85%;
+	height: 150px;
+	margin: 0 auto;
+	text-align: left;
+}
+
+#wrapper-menu {
+	background: #88ac0b url('images/menu-background.png') repeat-x;
+	float: left;
+	width: 100%;
+}
+
+#menu {
+	width: 85%;
+	margin: 0 auto; 
+	font-size: 95%;
+} 
+
+#menu ul {
+	margin: 0;
+	padding: 0; 
+	list-style: none; 
+}
+
+#menu li {
+	display: inline;
+}
+
+#menu a {
+	padding: 0.5em 1em;
+	background: transparent;
+	color: #FFF;
+	text-decoration: none;
+	border-right: 1px solid #95bc0e;
+	float: left; 
+}
+
+#menu a#seleccionado {
+	background: white;
+	color: #485B06;
+	font-weight: bold;
+}
+
+#menu a:hover {
+	background: #b6e41c url('images/menu-hover.png') repeat-x;
+	color: #485B06;
+}
+#content {
+	width: 83%;
+	margin: 0 auto;
+	padding: 3.5em 1% 20px 1%; 
+	border-left: 1px solid #bbb;
+	border-right: 1px solid #bbb;
+	border-bottom: 1px solid #bbb;
+	background: white;
+	font-size: 90%;
+	text-align: justify;
+}
+
+h2 {
+	color: #666;
+	padding-bottom: 3px;
+	border-bottom: 1px solid #a0c80e;
+	font-size: 150%;
+}
+
+h3 {
+	padding: 25px 0 5px 0;
+}
+
+/* ****************************************************************** */
+
+
+.bold {
+	font-weight: bold;
+}
+
+.italic {
+	font-style: italic;
+}
+
+#content a:hover {
+	font-weight: bold;
+	color: #A000A0;
+	text-decoration: none;
+}
+
+ul#contenidos li {
+	list-style-image:url('images/icon_pdf.png');
+}
+
+ul#practicas li {
+	list-style-image:url('images/icon_edit.gif');
+}
+
+table {
+	border-collapse: collapse;
+}
+
+th {
+	text-align: center;
+	font-weight: bold;
+	color: #FFFFFF;
+	background-color: #80D050;
+	padding: 10px;
+	border: 1px solid darkgray;
+}
+
+td {
+	padding: 10px;
+	border: 1px solid darkgray;
+	font-weight: bold;
+}
+
+td.field {
+	text-align: right;
+}
+
+td.field img {
+	float: left;
+	margin-right: 16px;
+}
+
+td.value {
+	color: #80D050;
+	text-align: center;
+}
+
+td.course-name {
+	background-color: lightgray;
+	width: 100px;
+	text-align: center;
+	color: royalblue;
+}
+
+#content a.email:hover {
+	color: blue;
+	text-decoration: underline;
+}
+
+img.icon {
+	display:inline-block;
+	/* rollo para que quede bien centrado verticalmente */
+	vertical-align: middle;
+}
+
+a.back {
+	display:inline-block;
+	white-space: nowrap;
+	color: #A0D050;
+	vertical-align: middle;
+	margin-left: 10px;
+}
+
+#test fieldset {
+	background-color: #eee;
+	margin-bottom: 20px;
+}
+
+#test fieldset:hover {
+	background-color: #FBF6D9;
+}
+
+#test fieldset legend {
+	font-weight: bold;
+}
+
+#test label {
+	display:block;
+}
+
+#test input {
+	margin-left: 6px;
+	vertical-align: middle;
+	position: relative;
+	top: 2px;
+	border-radius: 6px;
+	border: 1px solid gray;
+}
+
+#test input:focus {
+	border: 2px solid orange;
+}
+
+#test ol {
+	margin: 0px 0px 0px -24px;
+}
+
+#test .field + .field {
+	margin-top: 10px;
+}
+
+#test ol li + li {
+	margin-top: 10px;
+}
+
+#test li input {
+	margin: 0px 2px 0px -10px;
+}
+
+#test .boton_submit {
+	border: 0px;
+	padding: 0px;
+	background-color: transparent;
+	color: #60A020;
+	font-weight: bold;
+}
+
+#test .boton_submit:hover {
+	color:black;
+	cursor:pointer;
+}
+
+#test .boton_submit:focus {
+	border: 0px;
+}
+
+#rect_negro {
+	width: 240px;
+	height: 100px;
+	background-color: black;
+}
+
+#test .errorField input {
+	border: 2px solid red;
+}
+
+.errorLabel {
+	color: red;
+}
